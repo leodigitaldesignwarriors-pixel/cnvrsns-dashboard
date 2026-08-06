@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { formatUSD, formatDate } from "@/lib/format";
 import { InvoiceStatus } from "@/lib/types";
+import { getDeadlineStatus } from "@/lib/client-status";
 
 const statusTone = {
   unpaid: "red",
@@ -35,6 +36,7 @@ export default async function ClientDetailPage({
   const totalInvoiced = (invoices || []).reduce((s, i) => s + Number(i.amount), 0);
   const totalPaid = (invoices || []).reduce((s, i) => s + Number(i.paid_amount), 0);
   const totalOutstanding = totalInvoiced - totalPaid;
+  const deadlineStatus = getDeadlineStatus(client.deadline);
 
   return (
     <div className="space-y-6">
@@ -50,6 +52,21 @@ export default async function ClientDetailPage({
           <p className="mt-1 text-sm text-slate-500">
             {client.contact_email} {client.contact_phone && `· ${client.contact_phone}`}
           </p>
+          {(client.start_date || client.deadline) && (
+            <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              {client.start_date && <span>Started {formatDate(client.start_date)}</span>}
+              {client.deadline && (
+                <span>
+                  · Deadline {formatDate(client.deadline)}
+                  {deadlineStatus && (
+                    <Badge tone={deadlineStatus.tone} className="ml-2">
+                      {deadlineStatus.label}
+                    </Badge>
+                  )}
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex gap-3">
           <LinkButton href={`/dashboard/clients/${id}/edit`} variant="secondary">

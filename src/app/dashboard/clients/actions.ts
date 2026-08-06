@@ -13,6 +13,8 @@ function readClientForm(formData: FormData) {
     contact_phone: String(formData.get("contact_phone") || "") || null,
     status: String(formData.get("status") || "active") as ClientStatus,
     notes: String(formData.get("notes") || "") || null,
+    start_date: String(formData.get("start_date") || "") || null,
+    deadline: String(formData.get("deadline") || "") || null,
   };
 }
 

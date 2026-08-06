@@ -11,6 +11,8 @@ const navItems = [
   { href: "/dashboard/invoices", label: "Invoices" },
   { href: "/dashboard/employees", label: "Employees" },
   { href: "/dashboard/fixed-expenses", label: "Fixed Expenses" },
+  { href: "/dashboard/ledger", label: "Ledger" },
+  { href: "/dashboard/partners", label: "Partners" },
   { href: "/dashboard/reports", label: "Reports" },
 ];
 

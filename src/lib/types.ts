@@ -4,6 +4,7 @@ export type InvoiceStatus = "unpaid" | "partial" | "paid";
 export type EmployeeStatus = "active" | "inactive";
 export type TransactionType = "income" | "expense";
 export type ProfileRole = "partner" | "employee";
+export type Partner = "a" | "b";
 
 export interface Profile {
   id: string;
@@ -42,6 +43,8 @@ export interface Client {
   contact_phone: string | null;
   status: ClientStatus;
   notes: string | null;
+  start_date: string | null;
+  deadline: string | null;
   created_at: string;
 }
 
@@ -92,6 +95,30 @@ export interface FixedExpense {
   amount: number;
   account_id: string | null;
   is_active: boolean;
+  created_at: string;
+}
+
+export interface MonthlyLedger {
+  id: string;
+  month: string;
+  income: number;
+  business_expenses: number;
+  net_amount: number;
+  savings_cut: number;
+  profit_total: number;
+  partner_a_profit: number;
+  partner_b_profit: number;
+  closed_at: string;
+  closed_by: string | null;
+}
+
+export interface PartnerTransaction {
+  id: string;
+  partner: Partner;
+  amount: number;
+  date: string;
+  note: string | null;
+  created_by: string | null;
   created_at: string;
 }
 

@@ -45,6 +45,28 @@ export function ClientForm({
         </Select>
       </Field>
 
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Start date" htmlFor="start_date">
+          <Input
+            id="start_date"
+            name="start_date"
+            type="date"
+            required
+            defaultValue={client?.start_date ?? undefined}
+          />
+        </Field>
+
+        <Field label="Deadline" htmlFor="deadline">
+          <Input
+            id="deadline"
+            name="deadline"
+            type="date"
+            required
+            defaultValue={client?.deadline ?? undefined}
+          />
+        </Field>
+      </div>
+
       <Field label="Notes (optional)" htmlFor="notes">
         <Textarea id="notes" name="notes" rows={3} defaultValue={client?.notes ?? undefined} />
       </Field>

@@ -24,7 +24,6 @@ export function AccountForm({
       <Field label="Type" htmlFor="type">
         <Select id="type" name="type" defaultValue={account?.type || "other"}>
           <option value="business">Business</option>
-          <option value="personal">Personal</option>
           <option value="savings">Savings / safety</option>
           <option value="other">Other</option>
         </Select>

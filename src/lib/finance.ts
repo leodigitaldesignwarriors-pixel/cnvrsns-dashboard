@@ -2,12 +2,10 @@
 // Update this constant if the real exchange rate moves meaningfully.
 export const USD_TO_PKR_RATE = 277;
 
-// How a converted PKR payment is split across account types.
-export const SPLIT_RATIOS = {
-  business: 0.4,
-  personal: 0.3,
-  savings: 0.3,
-} as const;
+// Monthly ledger split — applied once a month via "Close Month", not per
+// payment. Change these if the ratios ever need to differ from 30% / 50-50.
+export const SAVINGS_CUT_RATIO = 0.3;
+export const PARTNER_SPLIT_RATIO = 0.5;
 
 // Flat platform withdrawal fee tiers (e.g. Payoneer-style), keyed by
 // invoice/payment size in USD.
@@ -26,30 +24,36 @@ export function convertUsdToPkr(amountUsd: number, feeOverride?: number) {
   return { fee, netUsd, netPkr };
 }
 
-export function splitPkr(netPkr: number) {
-  return {
-    business: netPkr * SPLIT_RATIOS.business,
-    personal: netPkr * SPLIT_RATIOS.personal,
-    savings: netPkr * SPLIT_RATIOS.savings,
-  };
+// Income - Business Expenses = Net; Net - 30% (Savings) = Profit; Profit
+// split 50/50 across the two partners. Run this once per month at close
+// time, and live (as a preview) for the current, not-yet-closed month.
+export function computeMonthlyLedger({
+  income,
+  businessExpenses,
+}: {
+  income: number;
+  businessExpenses: number;
+}) {
+  const netAmount = income - businessExpenses;
+  const savingsCut = Math.max(netAmount, 0) * SAVINGS_CUT_RATIO;
+  const profitTotal = netAmount - savingsCut;
+  const partnerAProfit = profitTotal * PARTNER_SPLIT_RATIO;
+  const partnerBProfit = profitTotal * PARTNER_SPLIT_RATIO;
+  return { netAmount, savingsCut, profitTotal, partnerAProfit, partnerBProfit };
 }
 
-// Projects the PKR split for all outstanding (unpaid/partial) invoices, as
-// if each were paid in full today — used to show an "upcoming" balance on
-// account cards before any payment is actually recorded.
-export function projectUpcomingSplit(
-  invoices: { amount: number; paid_amount: number; status: string }[],
+// Expected Total = current balance + what would land (after platform fee
+// and PKR conversion) if every outstanding invoice were paid today.
+export function projectExpectedTotal(
+  currentBalance: number,
+  outstandingInvoices: { amount: number; paid_amount: number; status: string }[],
 ) {
-  const totals = { business: 0, personal: 0, savings: 0 };
-  for (const inv of invoices) {
+  let projected = currentBalance;
+  for (const inv of outstandingInvoices) {
     if (inv.status === "paid") continue;
     const outstanding = Number(inv.amount) - Number(inv.paid_amount);
     if (outstanding <= 0) continue;
-    const { netPkr } = convertUsdToPkr(outstanding);
-    const split = splitPkr(netPkr);
-    totals.business += split.business;
-    totals.personal += split.personal;
-    totals.savings += split.savings;
+    projected += convertUsdToPkr(outstanding).netPkr;
   }
-  return totals;
+  return projected;
 }

@@ -1,7 +1,8 @@
 # Company Finance Dashboard
 
 Track your bank account balances, monthly income/expenses, clients and
-invoices, and employee salary payments in one place.
+invoices, employee salary payments, and a monthly partner-profit ledger in
+one place.
 
 - **Partners** get full access: accounts, transactions, clients, invoices,
   employees, reports.
@@ -90,53 +91,69 @@ partner dashboard (salary payments, reports) — they just can't sign in.
 
 ## 7. Everyday use
 
-**Currency:** company finance (accounts, transactions, salaries, reports) is
-always shown in **PKR**. Client invoicing (invoice amounts, client
-outstanding balances) is always shown in **USD**, since clients are billed
-in dollars.
+**Currency:** company finance (accounts, transactions, salaries, ledger,
+partner profit) is always shown in **PKR**. Client invoicing (invoice
+amounts, client outstanding balances) is always shown in **USD**, since
+clients are billed in dollars.
 
 **Invoice payment conversion:** when you record an invoice payment, the USD
-amount is automatically converted and split. This logic lives in
-[`src/lib/finance.ts`](src/lib/finance.ts):
+amount is automatically converted and deposited into your Business account.
+This logic lives in [`src/lib/finance.ts`](src/lib/finance.ts):
 1. A flat platform withdrawal fee is deducted based on invoice size ($1–199
    → $2, $200–499 → $5, $500–999 → $10, $1000+ → $29) — override it per
    payment if the real fee differs.
 2. The remainder is converted to PKR at a fixed rate (currently **Rs 277 /
    USD** — update `USD_TO_PKR_RATE` in `src/lib/finance.ts` as the real rate
-   moves).
-3. The PKR amount is split **40% Business / 30% Personal / 30% Savings**
-   and deposited as three separate transactions into whichever accounts
-   have those types. This requires exactly one account of each of the
-   `business`, `personal`, and `savings` types to exist.
+   moves) and deposited in full — no split happens per payment anymore.
 
-Account cards on the Overview page also show a projected "**+ Rs X
-upcoming**" figure — the same fee/conversion/split math applied to all
-currently outstanding (unpaid/partial) invoices, as if they were paid
-today.
+**Monthly profit model:** there is no Personal account — every account is
+either Business, Savings, or Other. Once a month, a partner opens
+**Ledger** and clicks **Close Month**, which:
+1. Sums that month's income and expenses on the Business account.
+2. Cuts **30%** of the net amount into your Savings account (one
+   transaction, `SAVINGS_CUT_RATIO` in `src/lib/finance.ts`).
+3. Splits what's left **50/50** between Partner A and Partner B
+   (`PARTNER_SPLIT_RATIO`), visible as each partner's profit card.
 
-- **Accounts** — add your savings/safety, personal, and business
-  accounts, each with an opening balance and an optional safety minimum.
-  The dashboard shows a status badge (Safe / Low / Below minimum /
-  Negative) per account, same idea as your original balance screenshot.
+A month can only be closed once, and its numbers are locked in permanently
+in `monthly_ledger` — the current, not-yet-closed month always shows a live
+preview instead. Partners spend down their own profit via **Partners** →
+log a withdrawal; the card always shows only the current month's remaining
+profit (it resets every month, past months stay in the Ledger history).
+
+**Expected Total** (on Overview) = current total balance + what your
+outstanding invoices would net after fee/conversion if paid today — a
+forward-looking number, not money you actually have yet.
+
+**Hiding amounts:** the eye icon on Overview masks Total Balance, Expected
+Total, and both partner profit cards behind `••••••` — handy if the screen
+is visible to others. It resets when you close the browser tab.
+
+- **Accounts** — add your savings and business accounts, each with an
+  opening balance and an optional safety minimum. The dashboard shows a
+  status badge (Safe / Low / Below minimum / Negative) per account.
 - **Transactions** — every income or expense you log against an account.
-  Marking an invoice paid or paying an employee's salary both create a
-  transaction automatically — you don't need to log those by hand.
-- **Clients** — track active vs. past clients and see all their invoices
-  and payments on one page.
+  Marking an invoice paid, paying an employee's salary, or closing a month
+  all create transactions automatically — you don't need to log those by
+  hand.
+- **Clients** — track active vs. past clients, a start date and deadline
+  per client (shown with an On track / Overdue badge), and all their
+  invoices and payments on one page.
 - **Invoices** — create an invoice for a client, then "Record a payment"
-  when they pay (full or partial) — this automatically deducts the fee,
-  converts to PKR, and splits 40/30/30 across your Business, Personal, and
-  Savings accounts.
+  when they pay (full or partial) — this deducts the fee, converts to PKR,
+  and deposits into your Business account.
 - **Employees** — "Pay salary" logs an expense transaction against
   whichever account you paid from.
 - **Fixed Expenses** — define recurring monthly costs (subscriptions, rent,
   fees, etc.) once, then "Mark paid" each month to log the actual
   transaction. Active employee salaries automatically show up in this list
-  too (read-only — pay those from the Employees page), so this is the
-  complete picture of your fixed monthly obligations and how much of them
-  you've paid so far this month.
+  too (read-only — pay those from the Employees page).
+- **Ledger** — the monthly close described above, plus a history of every
+  closed month's income/expenses/savings/partner split.
+- **Partners** — each partner's current profit balance, a form to log a
+  withdrawal against it, and a month-filterable withdrawal history.
 - **Reports** — pick a month to see income/expenses by category and by
-  account, plus business profit (excludes the personal account).
+  account. Business profit itself now lives on the Ledger page.
 
 ## 8. Deploy to Vercel
 

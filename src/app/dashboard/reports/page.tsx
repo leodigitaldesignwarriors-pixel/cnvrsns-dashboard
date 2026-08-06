@@ -17,7 +17,7 @@ export default async function ReportsPage({
   const supabase = await createClient();
   const { data: transactions } = await supabase
     .from("transactions")
-    .select("*, accounts(name, type)")
+    .select("*, accounts(name)")
     .gte("date", start)
     .lt("date", end);
 
@@ -29,16 +29,6 @@ export default async function ReportsPage({
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + Number(t.amount), 0);
   const net = totalIncome - totalExpense;
-
-  // Profit excludes the personal account — those are personal expenses, not
-  // business ones, so they shouldn't count toward business profit.
-  const businessRows = rows.filter(
-    (t) => (t.accounts as { type: string } | null)?.type !== "personal",
-  );
-  const profit = businessRows.reduce(
-    (s, t) => s + (t.type === "income" ? Number(t.amount) : -Number(t.amount)),
-    0,
-  );
 
   const byCategory = new Map<string, { income: number; expense: number }>();
   for (const t of rows) {
@@ -80,7 +70,7 @@ export default async function ReportsPage({
 
       <p className="text-slate-500">{formatMonthLabel(monthKey)}</p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Income</CardTitle>
@@ -113,19 +103,16 @@ export default async function ReportsPage({
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Profit (excl. personal)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p
-              className={`text-2xl font-semibold ${profit >= 0 ? "text-emerald-600" : "text-red-600"}`}
-            >
-              {formatPKR(profit)}
-            </p>
-          </CardContent>
-        </Card>
       </div>
+
+      <p className="text-sm text-slate-500">
+        Business profit (income − expenses − 30% savings, split 50/50 between partners) is
+        tracked on the{" "}
+        <a href="/dashboard/ledger" className="underline">
+          Monthly Ledger
+        </a>{" "}
+        page.
+      </p>
 
       <div>
         <h2 className="mb-3 text-lg font-medium">By category</h2>

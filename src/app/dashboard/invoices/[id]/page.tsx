@@ -47,13 +47,6 @@ export default async function InvoiceDetailPage({
   const estimatedFee = calculatePlatformFee(outstanding);
 
   const hasBusiness = (accounts || []).some((a) => a.type === "business");
-  const hasPersonal = (accounts || []).some((a) => a.type === "personal");
-  const hasSavings = (accounts || []).some((a) => a.type === "savings");
-  const missingAccountTypes = [
-    !hasBusiness && "Business",
-    !hasPersonal && "Personal",
-    !hasSavings && "Savings",
-  ].filter(Boolean) as string[];
 
   return (
     <div className="space-y-6">
@@ -128,10 +121,9 @@ export default async function InvoiceDetailPage({
                 {error}
               </p>
             )}
-            {missingAccountTypes.length > 0 ? (
+            {!hasBusiness ? (
               <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
-                Add a {missingAccountTypes.join(", ")} account before recording payments — the
-                40/30/30 split needs one of each.
+                Add a Business account before recording payments.
               </p>
             ) : (
               <>
@@ -167,8 +159,8 @@ export default async function InvoiceDetailPage({
                 </form>
                 <p className="mt-2 text-xs text-slate-500">
                   After the platform fee (auto-calculated from invoice size, or override above)
-                  and conversion at Rs {USD_TO_PKR_RATE}/USD, the PKR amount is automatically
-                  split 40% Business / 30% Personal / 30% Safety.
+                  and conversion at Rs {USD_TO_PKR_RATE}/USD, the full PKR amount is deposited
+                  into your Business account.
                 </p>
               </>
             )}

@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { cn } from "@/lib/utils";
-import { formatUSD } from "@/lib/format";
+import { formatUSD, formatDate } from "@/lib/format";
+import { getDeadlineStatus } from "@/lib/client-status";
 import { deleteClient } from "./actions";
 
 export default async function ClientsPage({
@@ -70,6 +71,7 @@ export default async function ClientsPage({
             <Th>Company</Th>
             <Th>Contact</Th>
             <Th>Status</Th>
+            <Th>Deadline</Th>
             <Th className="text-right">Outstanding</Th>
             <Th className="text-right">Actions</Th>
           </Tr>
@@ -77,6 +79,7 @@ export default async function ClientsPage({
         <TBody>
           {(clients || []).map((c) => {
             const outstanding = outstandingByClient.get(c.id) || 0;
+            const deadlineStatus = getDeadlineStatus(c.deadline);
             return (
               <Tr key={c.id}>
                 <Td>
@@ -94,6 +97,18 @@ export default async function ClientsPage({
                     {c.status === "active" ? "Active" : "Past"}
                   </Badge>
                 </Td>
+                <Td>
+                  {c.deadline ? (
+                    <div className="flex items-center gap-2">
+                      <span>{formatDate(c.deadline)}</span>
+                      {deadlineStatus && (
+                        <Badge tone={deadlineStatus.tone}>{deadlineStatus.label}</Badge>
+                      )}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </Td>
                 <Td className={cn("text-right", outstanding > 0 && "text-red-600 font-medium")}>
                   {outstanding > 0 ? formatUSD(outstanding) : "—"}
                 </Td>
@@ -108,7 +123,7 @@ export default async function ClientsPage({
           })}
           {(!clients || clients.length === 0) && (
             <Tr>
-              <Td colSpan={6} className="text-center text-slate-400">
+              <Td colSpan={7} className="text-center text-slate-400">
                 No clients yet.
               </Td>
             </Tr>

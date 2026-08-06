@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { InvoiceStatus } from "@/lib/types";
-import { convertUsdToPkr, splitPkr, USD_TO_PKR_RATE } from "@/lib/finance";
+import { convertUsdToPkr, USD_TO_PKR_RATE } from "@/lib/finance";
 
 function readInvoiceForm(formData: FormData) {
   return {
@@ -67,19 +67,16 @@ export async function recordInvoicePayment(id: string, formData: FormData) {
       .eq("is_archived", false);
 
     const businessAccount = accounts?.find((a) => a.type === "business");
-    const personalAccount = accounts?.find((a) => a.type === "personal");
-    const savingsAccount = accounts?.find((a) => a.type === "savings");
 
-    if (!businessAccount || !personalAccount || !savingsAccount) {
+    if (!businessAccount) {
       redirect(
         `/dashboard/invoices/${id}?error=${encodeURIComponent(
-          "Set up one Business, one Personal, and one Savings account before recording payments — the split needs all three.",
+          "Set up a Business account before recording payments.",
         )}`,
       );
     }
 
     const { fee, netUsd, netPkr } = convertUsdToPkr(paymentAmount, feeOverride);
-    const split = splitPkr(netPkr);
 
     const newPaidAmount = Number(invoice.paid_amount) + paymentAmount;
     const newStatus: InvoiceStatus =
@@ -93,41 +90,17 @@ export async function recordInvoicePayment(id: string, formData: FormData) {
     const invoiceRef = invoice.invoice_number ? ` #${invoice.invoice_number}` : "";
     const summary = `$${paymentAmount.toFixed(2)} - $${fee.toFixed(2)} fee = $${netUsd.toFixed(2)} @ Rs${USD_TO_PKR_RATE}`;
 
-    await supabase.from("transactions").insert([
-      {
-        account_id: businessAccount!.id,
-        type: "income",
-        amount: split.business,
-        category: "Client payment",
-        description: `Invoice payment${invoiceRef} — Business 40% (${summary})`,
-        date,
-        client_id: invoice.client_id,
-        invoice_id: id,
-        created_by: user?.id || null,
-      },
-      {
-        account_id: personalAccount!.id,
-        type: "income",
-        amount: split.personal,
-        category: "Client payment",
-        description: `Invoice payment${invoiceRef} — Personal 30% (${summary})`,
-        date,
-        client_id: invoice.client_id,
-        invoice_id: id,
-        created_by: user?.id || null,
-      },
-      {
-        account_id: savingsAccount!.id,
-        type: "income",
-        amount: split.savings,
-        category: "Client payment",
-        description: `Invoice payment${invoiceRef} — Safety 30% (${summary})`,
-        date,
-        client_id: invoice.client_id,
-        invoice_id: id,
-        created_by: user?.id || null,
-      },
-    ]);
+    await supabase.from("transactions").insert({
+      account_id: businessAccount!.id,
+      type: "income",
+      amount: netPkr,
+      category: "Client payment",
+      description: `Invoice payment${invoiceRef} (${summary})`,
+      date,
+      client_id: invoice.client_id,
+      invoice_id: id,
+      created_by: user?.id || null,
+    });
   }
 
   revalidatePath("/dashboard/invoices");
