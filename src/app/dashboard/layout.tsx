@@ -5,6 +5,11 @@ import { signOut } from "../login/actions";
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/team", label: "Team Dashboard" },
+  { href: "/dashboard/projects", label: "Projects" },
+  { href: "/dashboard/tasks", label: "Tasks" },
+  { href: "/dashboard/timeline", label: "Timeline" },
+  { href: "/dashboard/time-logs", label: "Time & Logs" },
   { href: "/dashboard/accounts", label: "Accounts" },
   { href: "/dashboard/transactions", label: "Transactions" },
   { href: "/dashboard/clients", label: "Clients" },

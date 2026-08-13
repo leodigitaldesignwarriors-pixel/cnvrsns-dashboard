@@ -146,3 +146,97 @@ export const FIXED_EXPENSE_CATEGORIES = [
   "Marketing & extras",
   "Other expense",
 ] as const;
+
+export type ProjectPlatform = "shopify" | "wordpress";
+export type ProjectStatus = "not_started" | "in_progress" | "in_review" | "completed";
+export type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "todo" | "in_progress" | "blocked" | "done";
+
+export interface Project {
+  id: string;
+  name: string;
+  client_name: string | null;
+  platform: ProjectPlatform;
+  start_date: string | null;
+  due_date: string | null;
+  status: ProjectStatus;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ProjectMember {
+  project_id: string;
+  employee_id: string;
+}
+
+export interface Task {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  estimated_hours: number | null;
+  created_at: string;
+}
+
+export interface TaskAssignee {
+  task_id: string;
+  employee_id: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  employee_id: string;
+  work_date: string;
+  clock_in: string;
+  clock_out: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface DailyLog {
+  id: string;
+  employee_id: string;
+  project_id: string | null;
+  task_id: string | null;
+  log_date: string;
+  hours: number;
+  description: string;
+  created_at: string;
+}
+
+export const PROJECT_PLATFORMS: { value: ProjectPlatform; label: string }[] = [
+  { value: "shopify", label: "Shopify" },
+  { value: "wordpress", label: "WordPress" },
+];
+
+export const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
+  { value: "not_started", label: "Not Started" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "in_review", label: "In Review" },
+  { value: "completed", label: "Completed" },
+];
+
+export const TASK_PRIORITIES: { value: TaskPriority; label: string }[] = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
+
+export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
+  { value: "todo", label: "To Do" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "blocked", label: "Blocked" },
+  { value: "done", label: "Done" },
+];
+
+export const DEFAULT_MILESTONE_TITLES = [
+  "Wireframe",
+  "Homepage design",
+  "Product page design",
+  "Theme setup",
+  "Client revisions",
+  "Launch",
+];

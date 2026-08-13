@@ -1,13 +1,14 @@
 # Company Finance Dashboard
 
 Track your bank account balances, monthly income/expenses, clients and
-invoices, employee salary payments, and a monthly partner-profit ledger in
-one place.
+invoices, employee salary payments, a monthly partner-profit ledger, and
+your team's projects/tasks/time tracking in one place.
 
-- **Partners** get full access: accounts, transactions, clients, invoices,
-  employees, reports.
-- **Employees** get a read-only "My Pay" portal showing only their own
-  salary payment history.
+- **Partners (Admin)** get full access: accounts, transactions, clients,
+  invoices, employees, reports, projects, tasks, timeline, and everyone's
+  time entries/daily logs.
+- **Employees** get a portal scoped to themselves: their own pay history,
+  sign-in/sign-off time clock, assigned tasks, and daily work logs.
 
 Built with Next.js (App Router) + Supabase (Postgres, Auth, Row Level
 Security) + Tailwind. Designed to run on Vercel's free tier and a free
@@ -154,6 +155,46 @@ is visible to others. It resets when you close the browser tab.
   withdrawal against it, and a month-filterable withdrawal history.
 - **Reports** — pick a month to see income/expenses by category and by
   account. Business profit itself now lives on the Ledger page.
+
+## Task & Project Tracking (BoxBettter)
+
+Added on top of the finance dashboard, reusing the same login and
+partner/employee roles (partner = admin here). Migration
+[`0005_task_tracking.sql`](supabase/migrations/0005_task_tracking.sql) adds
+six tables: `projects`, `project_members`, `tasks`, `task_assignees`,
+`time_entries`, `daily_logs` — run it the same way as the others (step 2).
+
+**Admin side** (`/dashboard/...`):
+- **Team Dashboard** — active projects, team workload, hours logged this
+  week, overdue tasks, and projects nearing deadline.
+- **Projects** — name, client, platform (Shopify/WordPress), dates, status,
+  and assigned employees; each project's detail page lists its tasks and
+  total hours logged.
+- **Tasks** — create under a project, assign one or more employees, set
+  priority/due date/estimated hours; the list is filterable by project,
+  employee, status, and priority, with inline status changes. A task's
+  detail page shows estimated vs. actual hours (summed from daily logs).
+- **Timeline** — a Gantt-style bar per project (today marked with a red
+  line) plus a list of upcoming task deadlines, overdue and due-soon
+  highlighted.
+- **Time & Logs** — every employee's time-clock entries and daily logs,
+  filterable by employee/project/date range.
+
+**Employee side** (`/portal/...`):
+- **Dashboard** — today's sign-in/sign-off status with a quick clock
+  button, hours this week, and their open tasks.
+- **Time Clock** — sign in/sign off (with an optional note on sign-off),
+  today's and this week's hours.
+- **My Tasks** — their assigned tasks with a status dropdown they can
+  update themselves (RLS only allows updating tasks assigned to them).
+- **Daily Log** — log hours against a project (and optionally a specific
+  task) with a short note on what they worked on; history below the form.
+- **My Pay** — unchanged, their own salary payment history.
+
+Employees only ever see projects/tasks they're assigned to and their own
+time entries and logs — enforced by Row Level Security, not just hidden in
+the UI (see `tasks_select_assigned`, `time_entries_own_manage`, etc. in the
+migration).
 
 ## 8. Deploy to Vercel
 
