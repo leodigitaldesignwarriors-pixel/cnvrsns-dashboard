@@ -1,19 +1,25 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/form";
 import { Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
+import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
 import { formatPKR, formatDate } from "@/lib/format";
 import { paySalary } from "../actions";
+import { inviteEmployeePortalAccess, revokeEmployeePortalAccess } from "../portal-access-actions";
 
 export default async function EmployeeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ invite_error?: string }>;
 }) {
   const { id } = await params;
+  const { invite_error: inviteError } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: employee }, { data: accounts }, { data: payments }] =
@@ -29,9 +35,17 @@ export default async function EmployeeDetailPage({
 
   if (!employee) notFound();
 
+  let portalEmail: string | null = null;
+  if (employee.user_id) {
+    const admin = createAdminClient();
+    const { data } = await admin.auth.admin.getUserById(employee.user_id);
+    portalEmail = data.user?.email || null;
+  }
+
   const totalPaid = (payments || []).reduce((s, p) => s + Number(p.amount), 0);
   const today = new Date().toISOString().slice(0, 10);
   const pay = paySalary.bind(null, id);
+  const invite = inviteEmployeePortalAccess.bind(null, id);
 
   return (
     <div className="space-y-6">
@@ -52,6 +66,43 @@ export default async function EmployeeDetailPage({
           Edit
         </LinkButton>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Portal access</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {employee.user_id ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <Badge tone="green">Invited</Badge>
+                {portalEmail && <p className="mt-1 text-sm text-slate-500">{portalEmail}</p>}
+              </div>
+              <ConfirmDeleteForm
+                action={revokeEmployeePortalAccess.bind(null, id, employee.user_id)}
+                confirmMessage={`Revoke ${employee.name}'s portal access? They'll no longer be able to sign in and see their tasks, time clock, or pay history. You can re-invite them later.`}
+              >
+                Revoke access
+              </ConfirmDeleteForm>
+            </div>
+          ) : (
+            <form action={invite} className="flex flex-wrap items-end gap-3">
+              <Field label="Email" htmlFor="email">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="w-64"
+                  placeholder="employee@email.com"
+                />
+              </Field>
+              <Button type="submit">Send invite</Button>
+            </form>
+          )}
+          {inviteError && <p className="mt-2 text-sm text-red-600">{inviteError}</p>}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>

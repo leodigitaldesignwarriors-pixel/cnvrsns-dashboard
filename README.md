@@ -47,6 +47,11 @@ Supabase project.
    ```
 2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    with the values from step 1.3.
+3. Fill in `SUPABASE_SERVICE_ROLE_KEY` with the **service_role** key from
+   the same API settings page. This one is only ever read on the server
+   (it powers "Send invite" on the Employees page) — never commit it,
+   never put it behind `NEXT_PUBLIC_`, and add it to Vercel's environment
+   variables too when you deploy (step 8).
 
 ## 4. Install dependencies and run locally
 
@@ -79,13 +84,16 @@ on the full dashboard.
 
 1. In the app, go to **Employees → Add employee** and fill in their name,
    role, monthly salary, and start date.
-2. If you want that employee to log in and see their own pay history:
-   - Create their login the same way as step 5.1.
-   - In **Table Editor → profiles**, find their row, leave `role` as
-     `employee`, and set `employee_id` to the id of the employee record
-     you created in step 1 (find it in **Table Editor → employees**).
-   - They can now sign in and see `/portal` with only their own salary
-     payments — nothing else.
+2. If you want that employee to log in (time clock, tasks, daily log, pay
+   history): open their employee page and use the **Portal access** card
+   — type their email and click **Send invite**. Supabase emails them a
+   link to set their password; once they do, they can sign in and land on
+   `/portal`, scoped to only their own data. No manual steps in the
+   Supabase dashboard needed anymore — this calls Supabase's admin API
+   using `SUPABASE_SERVICE_ROLE_KEY` from step 3, server-side only.
+   - **Revoke access** on the same card unlinks their login (they can no
+     longer see anything in the portal) without deleting the login itself
+     — re-invite the same email later to restore it.
 
 Employees you never give a login to still show up everywhere in the
 partner dashboard (salary payments, reports) — they just can't sign in.
@@ -200,18 +208,21 @@ migration).
 
 1. Push this repo to GitHub (or GitLab/Bitbucket).
 2. Go to [vercel.com/new](https://vercel.com/new) and import the repo.
-3. In the project's **Environment Variables** settings, add the same
-   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` you used
-   locally.
+3. In the project's **Environment Variables** settings, add the same three
+   variables you used locally: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
 4. Deploy. Vercel auto-detects Next.js — no build config needed.
 
 ---
 
 ## Notes on security
 
-- All data access goes through Supabase Row Level Security using each
-  user's own session — the app never uses a service-role key, so there's
-  nothing sensitive baked into the deployed code.
+- Almost all data access goes through Supabase Row Level Security using
+  each user's own session. The one exception is `SUPABASE_SERVICE_ROLE_KEY`
+  (server-only, never sent to the browser), used exclusively to invite/
+  revoke employee portal logins from the Employees page — every server
+  action that touches it re-checks `profiles.role = 'partner'` itself
+  before doing anything, so it can't be reached by an employee session.
 - Employees can only ever read their own `employees` row and the
   `transactions` rows linked to their own `employee_id` — verified at the
   database level, not just hidden in the UI.
