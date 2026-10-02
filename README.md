@@ -124,9 +124,10 @@ either Business, Savings, or Other. Once a month, a partner opens
 3. Splits what's left **50/50** between Partner A and Partner B
    (`PARTNER_SPLIT_RATIO`), visible as each partner's profit card.
 
-A month can only be closed once, and its numbers are locked in permanently
-in `monthly_ledger` — the current, not-yet-closed month always shows a live
-preview instead. Partners spend down their own profit via **Partners** →
+A closed month's numbers are locked in `monthly_ledger` — the current,
+not-yet-closed month always shows a live preview instead. Closed one by
+mistake? Open that month in **Ledger** and click **Reopen**: it removes the
+ledger row and that month's savings deposit so the month is live again. Partners spend down their own profit via **Partners** →
 log a withdrawal; the card always shows only the current month's remaining
 profit (it resets every month, past months stay in the Ledger history).
 

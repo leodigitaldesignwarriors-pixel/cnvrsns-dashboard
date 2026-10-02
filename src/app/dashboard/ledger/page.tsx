@@ -6,7 +6,8 @@ import { Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { formatPKR, formatMonthLabel, currentMonthKey } from "@/lib/format";
 import { computeMonthlyLedger } from "@/lib/finance";
 import { getLedgerInputsForMonth } from "@/lib/ledger-queries";
-import { closeMonth } from "./actions";
+import { ConfirmDeleteForm } from "@/components/confirm-delete-form";
+import { closeMonth, reopenMonth } from "./actions";
 
 export default async function LedgerPage({
   searchParams,
@@ -40,6 +41,7 @@ export default async function LedgerPage({
     : { income, businessExpenses, ...live };
 
   const closeThisMonth = closeMonth.bind(null, monthKey);
+  const reopenThisMonth = reopenMonth.bind(null, monthKey);
 
   return (
     <div className="space-y-8">
@@ -151,11 +153,32 @@ export default async function LedgerPage({
             <p className="mb-3 text-sm text-slate-500">
               This locks in the numbers above, deposits the 30% savings cut into your Savings
               account, and sets both partners&apos; profit cards for {formatMonthLabel(monthKey)}.
-              A month can only be closed once.
+              You can reopen it later if needed.
             </p>
             <form action={closeThisMonth}>
               <Button type="submit">Close {formatMonthLabel(monthKey)}</Button>
             </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {isClosed && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Reopen this month</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-3 text-sm text-slate-500">
+              Closed by mistake? Reopening removes the locked-in numbers and the 30% savings
+              deposit for {formatMonthLabel(monthKey)}, and puts the month back into live
+              preview so you can keep adding transactions and close it again later.
+            </p>
+            <ConfirmDeleteForm
+              action={reopenThisMonth}
+              confirmMessage={`Reopen ${formatMonthLabel(monthKey)}? The savings deposit for this month will be removed until you close it again.`}
+            >
+              Reopen {formatMonthLabel(monthKey)}
+            </ConfirmDeleteForm>
           </CardContent>
         </Card>
       )}
